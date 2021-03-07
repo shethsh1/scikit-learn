@@ -17,7 +17,7 @@ from scipy.sparse import lil_matrix
 
 import numpy as np
 
-from .validation import check_array, _assert_all_finite
+from .validation import check_array, _assert_all_finite, assert_all_finite
 
 
 def _unique_multiclass(y):
@@ -265,12 +265,15 @@ def type_of_target(y):
     # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
     with warnings.catch_warnings():
         warnings.simplefilter('error', np.VisibleDeprecationWarning)
-        try:
-            y = np.asarray(y)
-        except np.VisibleDeprecationWarning:
-            # dtype=object should be provided explicitly for ragged arrays,
-            # see NEP 34
-            y = np.asarray(y, dtype=object)
+
+        # it will run the following if is not csr matrix
+        if issparse(y) is False:
+            try:
+                y = np.asarray(y)
+            except np.VisibleDeprecationWarning:
+                # dtype=object should be provided explicitly for ragged arrays,
+                # see NEP 34
+                y = np.asarray(y, dtype=object)
 
     # The old sequence of sequences format
     try:
@@ -285,25 +288,55 @@ def type_of_target(y):
         pass
 
     # Invalid inputs
-    if y.ndim > 2 or (y.dtype == object and len(y) and
-                      not isinstance(y.flat[0], str)):
+    # Checking y.ndim is either 1 or 2
+    if y.ndim not in (1, 2):
+        # when the # of dimension is greater than 2
+        # [[[1, 1]]]
+        return 'unknown'
+
+    # Checking y if is empty
+    if not min(y.shape):
+        if y.ndim == 1:
+            return 'binary'
+        else:
+            return 'unknown'
+
+    # Basically same as the original but take out y.ndim
+    if issparse(y) is False and y.dtype == object and not isinstance(y.flat[0], str):
         return 'unknown'  # [[[1, 2]]] or [obj_1] and not ["label_1"]
 
-    if y.ndim == 2 and y.shape[1] == 0:
-        return 'unknown'  # [[]]
+    # removing this because it checked above
+    # if y.ndim == 2 and y.shape[1] == 0:
+    #     return 'unknown'  # [[]]
 
+    # Check multioutput
     if y.ndim == 2 and y.shape[1] > 1:
         suffix = "-multioutput"  # [[1, 2], [1, 2]]
     else:
         suffix = ""  # [1, 2, 3] or [[1], [2], [3]]
 
     # check float and contains non-integer float values
-    if y.dtype.kind == 'f' and np.any(y != y.astype(int)):
+    if y.dtype.kind == 'f':
         # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
-        _assert_all_finite(y)
-        return 'continuous' + suffix
+        # checking if is csr matrix replace y with y.data similar to below
+        if issparse(y) and np.any(y.data != y.data.astype(int)):
+            # if is csr matrix then we need to make sure it is pointing to the start of array
+            assert_all_finite(y)
+            return 'continuous' + suffix
+        # make sure is not csr matrix and work the same
+        elif issparse(y) is False and np.any(y != y.astype(int)):
+            # else stay the same
+            _assert_all_finite(y)
+            return 'continuous' + suffix
 
-    if (len(np.unique(y)) > 2) or (y.ndim >= 2 and len(y[0]) > 1):
+    # check multiclass (csr matrix)
+    # depends on if is csr matrix and give the right data
+    if issparse(y):
+        # we must check if this is csr because they are different
+        new_y0 = y.getrow(0).data
+    else:
+        new_y0 = y[0]
+    if (len(np.unique(y)) > 2) or (y.ndim == 2 and len(new_y0) > 1):
         return 'multiclass' + suffix  # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
     else:
         return 'binary'  # [1, 2] or [["a"], ["b"]]
