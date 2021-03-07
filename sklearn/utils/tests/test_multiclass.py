@@ -79,6 +79,23 @@ EXAMPLES = {
         np.array([['a', 'b'], ['c', 'd']], dtype=object),
         np.array([[1, 0, 2]]),
         _NotAnArray(np.array([[1, 0, 2]])),
+        # Extended test case here #
+        # Added a normal 3 x 3 2d array with more than two discrete values  #
+        csr_matrix(np.array([[1, 6, 2],[3, 2, 1],[4, 2, 6]])),
+        # Tested the same array from above with multiple different bytes  #
+        csr_matrix(np.array([[1, 6, 2],[3, 2, 1],[4, 2, 6]], dtype=np.int8)),
+        csr_matrix(np.array([[1, 6, 2],[3, 2, 1],[4, 2, 6]], dtype=np.uint8)),
+        csr_matrix(np.array([[1, 6, 2],[3, 2, 1],[4, 2, 6]], dtype=np.int16)),
+        csr_matrix(np.array([[1, 6, 2],[3, 2, 1],[4, 2, 6]], dtype=np.uint16)),
+        csr_matrix(np.array([[1, 6, 2],[3, 2, 1],[4, 2, 6]], dtype=np.int64)),
+        csr_matrix(np.array([[1, 6, 2],[3, 2, 1],[4, 2, 6]], dtype=np.uint64)),
+        # Although the values in the below matrix are floats, they are also integers #
+        # E.g., 1.0 == 1, so it cant be continious-multioutput since it cant have all integers #
+        csr_matrix(np.array([[1.0, 6.0, 2.0],[3.0, 2.0, 1.0],[4.0, 2.0, 6.0]])),
+        # Tested the same array from above with multiple different bytes  #
+        csr_matrix(np.array([[1.0, 6.0, 2.0],[3.0, 2.0, 1.0],[4.0, 2.0, 6.0]], dtype=np.float16)),
+        csr_matrix(np.array([[1.0, 6.0, 2.0],[3.0, 2.0, 1.0],[4.0, 2.0, 6.0]], dtype=np.float32)),        
+        
     ],
     'binary': [
         [0, 1],
@@ -112,6 +129,12 @@ EXAMPLES = {
         np.array([[0, .5], [.5, 0]]),
         np.array([[0, .5], [.5, 0]], dtype=np.float32),
         np.array([[0, .5]]),
+        # Extended test case here #
+        # Added a simple 3 x 3 2d array that has all float values #
+        csr_matrix(np.array([[0.5, 1.5, 0.5],[0.5, 0.5, 0.5],[0.5, 0.5, 1.5]])),
+        # Tested the same array from above with multiple different bytes  #
+        csr_matrix(np.array([[0.5, 1.5, 0.5],[0.5, 0.5, 0.5],[0.5, 0.5, 1.5]], dtype=np.float16)),
+        csr_matrix(np.array([[0.5, 1.5, 0.5],[0.5, 0.5, 0.5],[0.5, 0.5, 1.5]], dtype=np.float32)),        
     ],
     'unknown': [
         [[]],
