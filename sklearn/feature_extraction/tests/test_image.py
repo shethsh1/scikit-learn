@@ -54,6 +54,36 @@ def test_grid_to_graph():
                       dtype=np.float64)
     assert A.dtype == np.float64
 
+    # Checking that ordering remains unchanged
+    # Using the example input/output as in #18963
+    mask = np.zeros((2, 3), dtype=bool)
+    mask[0, 0] = 1
+    mask[0, 2] = 1
+    mask[1, 2] = 1
+    actual = grid_to_graph(2, 3, 1, mask=mask.ravel()).todense()
+    expected = np.array([[1, 0, 0], [0, 1, 1], [0, 1, 1]])
+    np.testing.assert_array_equal(actual, expected)
+
+    mask = np.zeros((2, 3), dtype=bool)
+    mask[0, 0] = 1
+    mask[0, 2] = 1
+    mask[1, 0] = 1
+    mask[1, 2] = 1
+    actual = grid_to_graph(2, 3, 1, mask=mask.ravel()).todense()
+    expected = np.array([[1, 0, 1, 0], [0, 1, 0, 1], [1, 0, 1, 0], [0, 1, 0, 1]])
+    np.testing.assert_array_equal(actual, expected)
+
+    mask = np.zeros((2, 3), dtype=bool)
+    mask[0, 0] = 1
+    mask[0, 1] = 1
+    mask[0, 2] = 1
+    mask[1, 0] = 1
+    mask[1, 2] = 1
+    actual = grid_to_graph(2, 3, 1, mask=mask.ravel()).todense()
+    expected = np.array([[1, 1, 0, 1, 0], [1, 1, 1, 0, 0], [0, 1, 1, 0, 1], [1, 0, 0, 1, 0], [0, 0, 1, 0, 1] ])
+    np.testing.assert_array_equal(actual, expected)
+
+
 
 @ignore_warnings(category=DeprecationWarning)  # scipy deprecation inside face
 def test_connect_regions():
